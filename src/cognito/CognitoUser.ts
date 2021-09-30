@@ -67,7 +67,7 @@ class CognitoUser {
     return this.username;
   }
 
-  getUserSub() {
+  getSub() {
     return this.sub;
   }
 

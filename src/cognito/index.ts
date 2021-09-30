@@ -4,8 +4,8 @@ type CognitoMiddlewareParams = {
   userpoolId?: string;
 };
 
-const cognitoMiddleware =
-  ({ userpoolId = process.env.AUTH_USERPOOLID }) =>
+export const cognitoMiddleware =
+  ({ userpoolId = process.env.AUTH_USERPOOLID }: CognitoMiddlewareParams) =>
   (req: any, res: any, next: any) => {
     // Fetch user ids
     const sub =
@@ -14,6 +14,11 @@ const cognitoMiddleware =
 
     const username = req.apiGateway.event.requestContext?.authorizer?.claims?.username;
 
+    // If userpool is not set, then use env variable
+    // if (!userpoolId && process.env.AUTH_USERPOOLID) {
+    //   userpoolId = process.env.AUTH_USERPOOLID as string;
+    // }
+
     // No userpool found
     if (!userpoolId) {
       throw new Error('Environment variable AUTH_USERPOOLID is not set.');
@@ -21,11 +26,7 @@ const cognitoMiddleware =
 
     // Using the cognito identity
     if (sub) {
-      req.user = new CognitoUser({
-        sub: req.apiGateway.event.requestContext.authorizer.claims.sub,
-        username: req.apiGateway.event.requestContext.authorizer.claims.username,
-        userpoolId,
-      });
+      req.user = new CognitoUser({ sub, username, userpoolId });
     }
 
     // Not authenticated
@@ -35,5 +36,3 @@ const cognitoMiddleware =
 
     next();
   };
-
-export default cognitoMiddleware;

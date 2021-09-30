@@ -39,7 +39,7 @@ app.use(cognitoMiddleware);
 
 app.get('/hello-user', async (req, res) => {
   req.user.getUsername();
-  req.user.getUserSub();
+  req.user.getSub();
   await req.user.getAttribute('email'); // foo@bar.com
   await req.user.getAttribute('given_name'); // Susan
   await req.user.getGroups(); // e.g. [{GroupName: 'moderator', ...}]
