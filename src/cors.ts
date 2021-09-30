@@ -1,7 +1,7 @@
-const cors = () => (req, res, next) => {
+export const cors = () => (req: any, res: any, next: any) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', '*');
   next();
 };
 
-export default cors;
+// export default cors;

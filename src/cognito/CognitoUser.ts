@@ -2,13 +2,24 @@ import { CognitoIdentityServiceProvider } from 'aws-sdk';
 
 const cognito = new CognitoIdentityServiceProvider({ apiVersion: '2016-04-18' });
 
+interface CognitoAttribute {
+  [key: string]: string | boolean | number | undefined;
+}
+
 /**
  * User object
  */
 class CognitoUser {
-  constructor({ sub, username }: { sub: string; username: string }) {
+  sub: string;
+  username?: string;
+  userpoolId: string;
+  attributes?: CognitoAttribute;
+  groups: any;
+
+  constructor({ sub, username, userpoolId }: { sub: string; username?: string; userpoolId: string }) {
     this.sub = sub;
     this.username = username;
+    this.userpoolId = userpoolId;
   }
 
   /**
@@ -19,26 +30,40 @@ class CognitoUser {
       return this.attributes;
     }
 
-    if (!process.env.AUTH_USERPOOLID) {
-      throw new Error('Environment variable AUTH_USERPOOLID is not set.');
-    }
-
     const user = await cognito
       .adminGetUser({
-        UserPoolId: process.env.AUTH_USERPOOLID,
-        Username: this.username,
+        UserPoolId: this.userpoolId,
+        Username: await this.getUsername(),
       })
       .promise();
 
     this.attributes = user.UserAttributes?.reduce((prev, cur) => {
-      prev[cur.Name] = cur.Value;
+      if (cur.Name) {
+        prev[cur.Name] = cur.Value;
+      }
       return prev;
-    }, {});
+    }, {} as CognitoAttribute);
 
     return this.attributes;
   }
 
-  getUsername() {
+  async getUsername(): Promise<string> {
+    // Fetch username by sub
+    if (!this.username) {
+      const userResult = await cognito
+        .listUsers({
+          Filter: `sub = "${this.sub}"`,
+          UserPoolId: this.userpoolId,
+        })
+        .promise();
+
+      this.username = userResult?.Users?.[0]?.Username;
+    }
+
+    if (!this.username) {
+      throw new Error('Could not find sub in Cognito ' + this.sub);
+    }
+
     return this.username;
   }
 
@@ -48,6 +73,11 @@ class CognitoUser {
 
   async getAttribute(key: string) {
     const user = await this.getUser();
+
+    if (!user) {
+      return undefined;
+    }
+
     return user[key];
   }
 
@@ -63,8 +93,8 @@ class CognitoUser {
 
     const groupsResult = await cognito
       .adminListGroupsForUser({
-        UserPoolId: process.env.AUTH_USERPOOLID,
-        Username: this.username,
+        UserPoolId: this.userpoolId,
+        Username: await this.getUsername(),
         // ...(Limit && { Limit }),
         // ...(NextToken && { NextToken }),
       })
