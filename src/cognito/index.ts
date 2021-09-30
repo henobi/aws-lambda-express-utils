@@ -14,11 +14,6 @@ export const cognitoMiddleware =
 
     const username = req.apiGateway.event.requestContext?.authorizer?.claims?.username;
 
-    // If userpool is not set, then use env variable
-    // if (!userpoolId && process.env.AUTH_USERPOOLID) {
-    //   userpoolId = process.env.AUTH_USERPOOLID as string;
-    // }
-
     // No userpool found
     if (!userpoolId) {
       throw new Error('Environment variable AUTH_USERPOOLID is not set.');

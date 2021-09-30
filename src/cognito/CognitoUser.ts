@@ -39,12 +39,20 @@ class CognitoUser {
 
     this.attributes = user.UserAttributes?.reduce((prev, cur) => {
       if (cur.Name) {
-        prev[cur.Name] = cur.Value;
+        prev[cur.Name] = this._modifyFieldValue(cur.Name, cur.Value);
       }
       return prev;
     }, {} as CognitoAttribute);
 
     return this.attributes;
+  }
+
+  _modifyFieldValue(key: string, value: string | boolean | number | undefined) {
+    if (key === 'email_verified') {
+      return value === 'true';
+    }
+
+    return value;
   }
 
   async getUsername(): Promise<string> {
