@@ -22,12 +22,11 @@ export const cognitoMiddleware =
     // Using the cognito identity
     if (sub) {
       req.user = new CognitoUser({ sub, username, userpoolId });
+      next();
     }
 
     // Not authenticated
     else {
       res.status(403).json({ error: 'Unauthenticated' });
     }
-
-    next();
   };

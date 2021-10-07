@@ -11,7 +11,7 @@ test('Check cors', () => {
   mycors(req, res, next);
 
   expect(req).toBeCalledTimes(0);
-  expect(next).toBeCalled();
+  expect(next).toBeCalledTimes(1);
 
   expect(res.header).toBeCalledTimes(2);
   expect(res.header).toBeCalledWith('Access-Control-Allow-Origin', '*');
